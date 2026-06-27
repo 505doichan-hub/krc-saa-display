@@ -6,31 +6,43 @@
   const IDLE_TEXT = "ーーー";
   let db = null;
   let docRef = null;
+  let pendingMessageId = "";
+  let pendingTimer = null;
 
   const isController = document.body.classList.contains("controller-page");
   const isDisplay = document.body.classList.contains("display-page");
 
-  function setStatus(text) {
+  function setStatus(text, tone = "") {
     const controllerStatus = document.getElementById("statusText");
     const displayStatus = document.getElementById("displayStatus");
-    if (controllerStatus) controllerStatus.textContent = text;
+    if (controllerStatus) {
+      controllerStatus.textContent = text;
+      controllerStatus.className = "status-text" + (tone ? " " + tone : "");
+    }
     if (displayStatus) displayStatus.textContent = text;
+  }
+
+  function setLast(text, tone = "") {
+    const last = document.getElementById("lastSentText");
+    if (!last) return;
+    last.textContent = text;
+    last.className = "last-sent" + (tone ? " " + tone : "");
   }
 
   function initFirebase() {
     if (!window.firebaseConfig || !window.firebaseConfig.apiKey) {
-      setStatus("Firebase設定が読み込めません。firebase-config.jsを確認してください。");
+      setStatus("Firebase設定が読み込めません。firebase-config.jsを確認してください。", "error");
       return false;
     }
     try {
       if (!firebase.apps.length) firebase.initializeApp(window.firebaseConfig);
       db = firebase.firestore();
       docRef = db.collection(COLLECTION).doc(DOC_ID);
-      setStatus("Firebase接続完了");
+      setStatus("Firebase接続完了", "ok");
       return true;
     } catch (error) {
       console.error(error);
-      setStatus("Firebase接続エラー: " + error.message);
+      setStatus("Firebase接続エラー: " + error.message, "error");
       return false;
     }
   }
@@ -57,21 +69,31 @@
     window.setTimeout(() => button.classList.remove(className), duration);
   }
 
+  function markPendingTimeout(messageId, displayText) {
+    if (pendingTimer) window.clearTimeout(pendingTimer);
+    pendingTimer = window.setTimeout(() => {
+      if (pendingMessageId === messageId) {
+        setStatus("iPad確認待ち（通信中）", "waiting");
+        setLast("未確認：" + displayText + "　※iPad側の画面も確認してください", "waiting");
+      }
+    }, 2500);
+  }
+
   async function sendMessage(text, action = "message", explicitType = "", sourceButton = null) {
     if (!docRef) {
-      setStatus("Firebase未接続です。ページを再読み込みしてください。");
+      setStatus("Firebase未接続です。ページを再読み込みしてください。", "error");
       return;
     }
     const finalText = action === "clear" ? "" : String(text || "").trim();
     const type = classifyMessage(finalText, action, explicitType);
     const messageId = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
     const displayText = readableMessage(finalText, action);
+    pendingMessageId = messageId;
 
-    setStatus("送信中…");
-    const last = document.getElementById("lastSentText");
-    if (last) last.textContent = "送信中：" + displayText;
-    flashButton(sourceButton, "sending");
-    if (navigator.vibrate) navigator.vibrate(35);
+    setStatus("送信中…", "waiting");
+    setLast("送信中：" + displayText, "waiting");
+    flashButton(sourceButton, "sending", 1100);
+    if (navigator.vibrate) navigator.vibrate(45);
 
     try {
       await docRef.set({
@@ -84,16 +106,18 @@
         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
         clientTime: new Date().toISOString()
       }, { merge: true });
-      setStatus("送信済み・iPad反映待ち");
-      if (last) last.textContent = "送信済み：" + displayText;
-      flashButton(sourceButton, "sent");
-      if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
+      setStatus("送信済み・iPad表示待ち", "waiting");
+      setLast("送信済み：" + displayText + "　→ iPad確認待ち", "waiting");
+      flashButton(sourceButton, "sent", 1200);
+      markPendingTimeout(messageId, displayText);
+      if (navigator.vibrate) navigator.vibrate([25, 35, 25]);
     } catch (error) {
       console.error(error);
-      setStatus("送信エラー: " + error.message);
-      if (last) last.textContent = "送信エラー：" + error.message;
-      flashButton(sourceButton, "send-error", 1600);
-      if (navigator.vibrate) navigator.vibrate([80, 60, 80]);
+      pendingMessageId = "";
+      setStatus("送信エラー: " + error.message, "error");
+      setLast("送信エラー：" + error.message, "error");
+      flashButton(sourceButton, "send-error", 1800);
+      if (navigator.vibrate) navigator.vibrate([90, 60, 90]);
     }
   }
 
@@ -103,6 +127,7 @@
 
   function setupController() {
     document.querySelectorAll(".cue-button").forEach(button => {
+      button.addEventListener("pointerdown", () => flashButton(button, "touching", 250), { passive: true });
       button.addEventListener("click", () => {
         const action = button.dataset.action || "message";
         const explicitType = button.dataset.type || "";
@@ -117,9 +142,10 @@
 
     const meetingButton = document.getElementById("sendMeetingButton");
     if (meetingButton && meetingInput) {
+      meetingButton.addEventListener("pointerdown", () => flashButton(meetingButton, "touching", 250), { passive: true });
       meetingButton.addEventListener("click", () => {
         const num = normalizeDigits(meetingInput.value);
-        if (!num) { setStatus("例会番号を入力してください。"); return; }
+        if (!num) { setStatus("例会番号を入力してください。", "error"); return; }
         localStorage.setItem("saaMeetingNumber", num);
         sendMessage(`第${num}回例会`, "message", "meeting", meetingButton);
       });
@@ -129,9 +155,10 @@
     const freeInput = document.getElementById("freeMessage");
     const freeButton = document.getElementById("sendFreeButton");
     if (freeButton && freeInput) {
+      freeButton.addEventListener("pointerdown", () => flashButton(freeButton, "touching", 250), { passive: true });
       freeButton.addEventListener("click", () => {
         const msg = freeInput.value.trim();
-        if (!msg) { setStatus("自由入力欄に文字を入力してください。"); return; }
+        if (!msg) { setStatus("自由入力欄に文字を入力してください。", "error"); return; }
         sendMessage(msg, "message", "free", freeButton);
       });
       freeInput.addEventListener("keydown", e => { if (e.key === "Enter") freeButton.click(); });
@@ -155,15 +182,19 @@
         });
 
         if (data.messageId && data.displayAckId === data.messageId) {
-          setStatus("iPad表示確認済み");
-          const last = document.getElementById("lastSentText");
-          if (last) last.textContent = "iPad表示中：" + currentText;
-        } else if (data.messageId) {
-          setStatus("送信済み・iPad反映待ち");
+          if (pendingMessageId === data.messageId) {
+            pendingMessageId = "";
+            if (pendingTimer) window.clearTimeout(pendingTimer);
+            setLast("iPad表示確認済み：" + currentText, "ok");
+            if (navigator.vibrate) navigator.vibrate([20, 35, 20, 35, 20]);
+          }
+          setStatus("iPad表示確認済み ✓", "ok");
+        } else if (data.messageId && pendingMessageId === data.messageId) {
+          setStatus("送信済み・iPad表示待ち", "waiting");
         }
       }, error => {
         console.error(error);
-        setStatus("確認受信エラー: " + error.message);
+        setStatus("確認受信エラー: " + error.message, "error");
       });
     }
   }
@@ -195,28 +226,26 @@
     if (!box) return;
 
     element.style.fontSize = "20px";
-    element.style.lineHeight = "1.02";
+    element.style.lineHeight = "0.92";
 
-    const maxW = Math.max(10, box.clientWidth * 0.985);
-    const maxH = Math.max(10, box.clientHeight * 0.955);
+    const maxW = Math.max(10, box.clientWidth * 0.99);
+    const maxH = Math.max(10, box.clientHeight * 0.98);
     const lines = Math.min(2, Math.max(1, countDisplayLines(element)));
 
     let low = 20;
-    let high = Math.max(360, Math.min(window.innerWidth, window.innerHeight) * 1.6);
+    let high = 2000;
     let best = low;
 
-    for (let i = 0; i < 32; i++) {
+    for (let i = 0; i < 36; i++) {
       const mid = (low + high) / 2;
       element.style.fontSize = `${mid}px`;
-      const hLimit = lines === 1 ? maxH : maxH;
-      if (element.scrollWidth <= maxW && element.scrollHeight <= hLimit) {
+      if (element.scrollWidth <= maxW && element.scrollHeight <= maxH) {
         best = mid;
         low = mid + 1;
       } else {
         high = mid - 1;
       }
     }
-
     element.style.fontSize = `${Math.floor(best)}px`;
   }
 
