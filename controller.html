@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>SAA送信機</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=6" />
 </head>
 <body class="controller-page">
   <header class="controller-header">
@@ -50,15 +50,17 @@
       <button data-action="clear" data-type="idle" class="cue-button clear">画面クリア</button>
     </section>
 
-    <section class="status-panel" aria-live="polite">
-      <div id="statusText">Firebase接続準備中...</div>
+    <section class="status-panel current-panel" aria-live="polite">
+      <div class="current-label">現在iPadに表示中</div>
+      <div id="currentDisplayText" class="current-display">確認中...</div>
+      <div id="statusText" class="status-text">Firebase接続準備中...</div>
       <div id="lastSentText" class="last-sent"></div>
     </section>
   </main>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-  <script src="firebase-config.js"></script>
-  <script src="app.js"></script>
+  <script src="firebase-config.js?v=6"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>

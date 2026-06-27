@@ -63,7 +63,7 @@
     #messageBox.red { background: var(--red) !important; color: #fff !important; }
     #messageBox.white { background: #fff !important; color: #000 !important; }
     #messageBox.meeting { background: var(--meeting) !important; color: #000 !important; }
-    #messageBox.meeting #displayMessage { white-space: nowrap !important; line-height: 1.0 !important; }
+    #messageBox.meeting #displayMessage { white-space: nowrap !important; line-height: 0.92 !important; }
     #messageBox.free { background: var(--blue) !important; color: #fff !important; }
     #messageBox.ok { background: var(--green) !important; color: #fff !important; }
     #displayStatus {
@@ -85,7 +85,7 @@
 
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-  <script src="firebase-config.js?v=4"></script>
+  <script src="firebase-config.js?v=6"></script>
   <script>
     (() => {
       const COLLECTION = "saaCue";
@@ -141,16 +141,16 @@
         if (!box || !el) return;
 
         const isMeeting = box.classList.contains("meeting");
-        const maxW = Math.max(100, window.innerWidth * (isMeeting ? 0.96 : 0.995));
-        const maxH = Math.max(100, window.innerHeight * (isMeeting ? 0.38 : 0.985));
+        const maxW = Math.max(100, window.innerWidth * (isMeeting ? 0.985 : 0.995));
+        const maxH = Math.max(100, window.innerHeight * (isMeeting ? 0.86 : 0.985));
 
-        el.style.lineHeight = isMeeting ? "1.0" : "0.92";
+        el.style.lineHeight = isMeeting ? "0.92" : "0.92";
         el.style.whiteSpace = isMeeting ? "nowrap" : "pre-line";
         el.style.fontSize = isMeeting ? "120px" : "300px";
 
-        let low = isMeeting ? 30 : 40;
-        let high = isMeeting ? 900 : 1800;
-        let best = isMeeting ? 80 : 120;
+        let low = isMeeting ? 50 : 40;
+        let high = isMeeting ? 1600 : 1800;
+        let best = isMeeting ? 180 : 120;
 
         for (let i = 0; i < 42; i++) {
           const mid = (low + high) / 2;
@@ -166,6 +166,9 @@
         el.style.fontSize = Math.floor(best) + "px";
       }
 
+      let currentRef = null;
+      let lastAckedId = "";
+
       function render(data) {
         const raw = String(data && data.text ? data.text : "").trim();
         const text = raw || IDLE;
@@ -177,6 +180,22 @@
         requestAnimationFrame(fitText);
         setTimeout(fitText, 60);
         setTimeout(fitText, 250);
+
+        const messageId = data && data.messageId ? String(data.messageId) : "";
+        if (currentRef && messageId && data.displayAckId !== messageId && lastAckedId !== messageId) {
+          lastAckedId = messageId;
+          setTimeout(() => {
+            currentRef.set({
+              displayAckId: messageId,
+              displayedText: raw,
+              displayAckAt: firebase.firestore.FieldValue.serverTimestamp(),
+              displayClientTime: new Date().toISOString()
+            }, { merge: true }).catch(err => {
+              console.error(err);
+              setStatus("表示確認送信エラー: " + err.message);
+            });
+          }, 120);
+        }
       }
 
       function init() {
@@ -187,6 +206,7 @@
           if (!firebase.apps.length) firebase.initializeApp(window.firebaseConfig);
           const db = firebase.firestore();
           const ref = db.collection(COLLECTION).doc(DOC_ID);
+          currentRef = ref;
           setStatus("Firebase接続完了");
           ref.onSnapshot(snapshot => {
             setStatus("Firebase接続完了");

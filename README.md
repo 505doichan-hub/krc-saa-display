@@ -1,6 +1,8 @@
-# KRC SAA Cue v4 Huge Display
+# KRC SAA Cue v6
 
-- iPad表示の文字サイズを最大化
-- メッセージごとの背景色・文字色をiPad側で強制反映
-- 初期表示は「ーーー」黒背景・白文字
-- 通信方式は既存Firebase/Firestoreを維持
+- 例会回数表示を大型化
+- 送信機に「現在iPadに表示中」を表示
+- iPad側が実際に表示したら「iPad表示確認済み」と表示
+- 押したボタンを一時強調表示
+- 現在表示中の定型ボタンを緑枠で強調
+- Firebase/Firestore設定は維持

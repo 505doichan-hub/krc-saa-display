@@ -46,27 +46,54 @@
     return "white";
   }
 
-  async function sendMessage(text, action = "message", explicitType = "") {
+  function readableMessage(text, action) {
+    if (action === "clear" || !String(text || "").trim()) return "ーーー";
+    return String(text || "").trim();
+  }
+
+  function flashButton(button, className, duration = 850) {
+    if (!button) return;
+    button.classList.add(className);
+    window.setTimeout(() => button.classList.remove(className), duration);
+  }
+
+  async function sendMessage(text, action = "message", explicitType = "", sourceButton = null) {
     if (!docRef) {
       setStatus("Firebase未接続です。ページを再読み込みしてください。");
       return;
     }
     const finalText = action === "clear" ? "" : String(text || "").trim();
     const type = classifyMessage(finalText, action, explicitType);
+    const messageId = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    const displayText = readableMessage(finalText, action);
+
+    setStatus("送信中…");
+    const last = document.getElementById("lastSentText");
+    if (last) last.textContent = "送信中：" + displayText;
+    flashButton(sourceButton, "sending");
+    if (navigator.vibrate) navigator.vibrate(35);
+
     try {
       await docRef.set({
         text: finalText,
         type,
         action,
+        messageId,
+        displayAckId: "",
+        displayedText: "",
         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
         clientTime: new Date().toISOString()
       }, { merge: true });
-      setStatus("送信しました");
-      const last = document.getElementById("lastSentText");
-      if (last) last.textContent = action === "clear" ? "送信：画面クリア" : "送信：" + finalText;
+      setStatus("送信済み・iPad反映待ち");
+      if (last) last.textContent = "送信済み：" + displayText;
+      flashButton(sourceButton, "sent");
+      if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
     } catch (error) {
       console.error(error);
       setStatus("送信エラー: " + error.message);
+      if (last) last.textContent = "送信エラー：" + error.message;
+      flashButton(sourceButton, "send-error", 1600);
+      if (navigator.vibrate) navigator.vibrate([80, 60, 80]);
     }
   }
 
@@ -79,8 +106,8 @@
       button.addEventListener("click", () => {
         const action = button.dataset.action || "message";
         const explicitType = button.dataset.type || "";
-        if (action === "clear") sendMessage("", "clear", "idle");
-        else sendMessage(button.dataset.message || button.textContent.trim(), action, explicitType);
+        if (action === "clear") sendMessage("", "clear", "idle", button);
+        else sendMessage(button.dataset.message || button.textContent.trim(), action, explicitType, button);
       });
     });
 
@@ -94,7 +121,7 @@
         const num = normalizeDigits(meetingInput.value);
         if (!num) { setStatus("例会番号を入力してください。"); return; }
         localStorage.setItem("saaMeetingNumber", num);
-        sendMessage(`第${num}回例会`, "message", "meeting");
+        sendMessage(`第${num}回例会`, "message", "meeting", meetingButton);
       });
       meetingInput.addEventListener("keydown", e => { if (e.key === "Enter") meetingButton.click(); });
     }
@@ -105,9 +132,39 @@
       freeButton.addEventListener("click", () => {
         const msg = freeInput.value.trim();
         if (!msg) { setStatus("自由入力欄に文字を入力してください。"); return; }
-        sendMessage(msg, "message", "free");
+        sendMessage(msg, "message", "free", freeButton);
       });
       freeInput.addEventListener("keydown", e => { if (e.key === "Enter") freeButton.click(); });
+    }
+
+    if (docRef) {
+      docRef.onSnapshot(snapshot => {
+        const data = snapshot.exists ? snapshot.data() : {};
+        const action = data.action || "message";
+        const currentText = readableMessage(data.text, action);
+        const currentEl = document.getElementById("currentDisplayText");
+        if (currentEl) currentEl.textContent = currentText;
+
+        document.querySelectorAll(".cue-button.is-current").forEach(btn => btn.classList.remove("is-current"));
+        document.querySelectorAll(".cue-button").forEach(btn => {
+          const btnAction = btn.dataset.action || "message";
+          const btnText = btnAction === "clear" ? "" : (btn.dataset.message || btn.textContent.trim());
+          if ((action === "clear" && btnAction === "clear") || (action !== "clear" && btnText === data.text)) {
+            btn.classList.add("is-current");
+          }
+        });
+
+        if (data.messageId && data.displayAckId === data.messageId) {
+          setStatus("iPad表示確認済み");
+          const last = document.getElementById("lastSentText");
+          if (last) last.textContent = "iPad表示中：" + currentText;
+        } else if (data.messageId) {
+          setStatus("送信済み・iPad反映待ち");
+        }
+      }, error => {
+        console.error(error);
+        setStatus("確認受信エラー: " + error.message);
+      });
     }
   }
 

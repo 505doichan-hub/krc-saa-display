@@ -52,3 +52,53 @@ button, input { font: inherit; }
   .cue-button { min-height: 56px; }
 }
 @media (max-width: 520px) { .home-actions { grid-template-columns: 1fr; } }
+
+/* v6: 送信確認・現在表示中 */
+.current-panel {
+  border: 3px solid rgba(23, 69, 143, .18);
+}
+.current-label {
+  font-size: .9rem;
+  font-weight: 900;
+  color: #526078;
+  margin-bottom: 4px;
+}
+.current-display {
+  font-size: clamp(1.4rem, 6vw, 2.6rem);
+  line-height: 1.15;
+  font-weight: 1000;
+  color: var(--rotary-blue);
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: #eef4ff;
+  margin-bottom: 8px;
+  text-align: center;
+}
+.status-text {
+  font-weight: 900;
+}
+.cue-button.sending,
+.meeting-send.sending,
+.free-input-row button.sending {
+  outline: 5px solid #ffea00;
+  transform: scale(.985);
+  filter: brightness(1.06);
+}
+.cue-button.sent,
+.meeting-send.sent,
+.free-input-row button.sent {
+  outline: 5px solid #00c853;
+  filter: brightness(1.10);
+}
+.cue-button.send-error,
+.meeting-send.send-error,
+.free-input-row button.send-error {
+  outline: 5px solid #ff1744;
+}
+.cue-button.is-current {
+  outline: 5px solid #00c853;
+  box-shadow: 0 0 0 4px rgba(0, 200, 83, .22), 0 10px 28px rgba(0,0,0,.22);
+}
+@media (max-width: 520px) {
+  .current-display { font-size: clamp(1.6rem, 7vw, 2.3rem); }
+}
