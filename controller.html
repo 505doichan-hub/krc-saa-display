@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>SAA送信機</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="controller-page">
+  <header class="controller-header">
+    <h1>SAA送信機</h1>
+    <p>東京国分寺ロータリークラブ</p>
+  </header>
+
+  <main class="controller-main">
+    <section class="meeting-form">
+      <label for="meetingNumber">例会番号を送信</label>
+      <div class="meeting-input-row">
+        <span>第</span>
+        <input id="meetingNumber" type="text" inputmode="numeric" pattern="[0-9０-９]*" placeholder="□□□□" maxlength="8" autocomplete="off" />
+        <span>回例会</span>
+        <button id="sendMeetingButton" class="meeting-send" type="button">送信</button>
+      </div>
+    </section>
+
+    <section class="free-form">
+      <label for="freeMessage">自由入力</label>
+      <div class="free-input-row">
+        <input id="freeMessage" type="text" placeholder="任意のメッセージ" autocomplete="off" />
+        <button id="sendFreeButton" type="button">送信</button>
+      </div>
+    </section>
+
+    <section class="button-grid" aria-label="定型メッセージ">
+      <button data-message="あと５分" data-type="navy" class="cue-button navy">あと５分</button>
+      <button data-message="あと３分" data-type="navy" class="cue-button navy">あと３分</button>
+      <button data-message="あと１分" data-type="red" class="cue-button red">あと１分</button>
+      <button data-message="終わってください" data-type="red" class="cue-button red">終わってください</button>
+
+      <button data-message="まとめをお願いします" data-type="white" class="cue-button white">まとめをお願いします</button>
+      <button data-message="マイクを近づけてください" data-type="white" class="cue-button white">マイクを近づけてください</button>
+      <button data-message="もう少し大きな声でお願いします" data-type="white" class="cue-button white wide">もう少し大きな声でお願いします</button>
+      <button data-message="ゆっくりお願いします" data-type="white" class="cue-button white">ゆっくりお願いします</button>
+      <button data-message="次へお願いします" data-type="white" class="cue-button white">次へお願いします</button>
+      <button data-message="もう少し話してください" data-type="white" class="cue-button white">もう少し話してください</button>
+      <button data-message="マイクをONにしてください" data-type="white" class="cue-button white wide">マイクをONにしてください</button>
+
+      <button data-message="OK" data-type="ok" class="cue-button ok">OK</button>
+      <button data-message="STOP" data-type="red" class="cue-button red">STOP</button>
+      <button data-action="clear" data-type="idle" class="cue-button clear">画面クリア</button>
+    </section>
+
+    <section class="status-panel" aria-live="polite">
+      <div id="statusText">Firebase接続準備中...</div>
+      <div id="lastSentText" class="last-sent"></div>
+    </section>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

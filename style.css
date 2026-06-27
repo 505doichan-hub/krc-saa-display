@@ -1,0 +1,54 @@
+:root {
+  --rotary-blue: #17458f;
+  --rotary-gold: #f7c600;
+  --navy: #061a44;
+  --red: #d71920;
+  --free-blue: #005bac;
+  --meeting-gray: #e6e6e6;
+  --text: #172033;
+  --success: #067647;
+  --panel: #ffffff;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif; color: var(--text); }
+button, input { font: inherit; }
+.home-page, .controller-page { background: linear-gradient(145deg, #eef4ff, #fff7e6); }
+.home-card { width: min(92vw, 720px); margin: 8vh auto; background: rgba(255,255,255,.96); border-radius: 28px; padding: 34px; box-shadow: 0 20px 60px rgba(23,69,143,.16); text-align: center; }
+.home-card h1 { margin: 0 0 16px; color: var(--rotary-blue); line-height: 1.35; }
+.home-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 28px 0 18px; }
+.primary-link, .secondary-link { display: block; padding: 18px 20px; border-radius: 16px; text-decoration: none; font-weight: 900; }
+.primary-link { color: #fff; background: var(--rotary-blue); }
+.secondary-link { color: var(--rotary-blue); background: #eef4ff; border: 2px solid var(--rotary-blue); }
+.note { color: #5a6478; font-size: .95rem; }
+.controller-header { padding: calc(18px + env(safe-area-inset-top)) 18px 14px; background: var(--rotary-blue); color: #fff; text-align: center; }
+.controller-header h1 { margin: 0; font-size: clamp(1.35rem, 5vw, 2rem); }
+.controller-header p { margin: 4px 0 0; opacity: .9; }
+.controller-main { width: min(100%, 980px); margin: 0 auto; padding: 16px 14px calc(24px + env(safe-area-inset-bottom)); }
+.meeting-form, .free-form, .status-panel { background: var(--panel); border-radius: 20px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.08); margin-bottom: 14px; }
+.meeting-form label, .free-form label { display: block; font-weight: 900; margin-bottom: 10px; color: var(--rotary-blue); }
+.meeting-input-row { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 8px; font-weight: 900; font-size: clamp(1rem, 4.5vw, 1.4rem); }
+.meeting-input-row input, .free-input-row input { width: 100%; min-width: 0; border: 2px solid #d9e2f2; border-radius: 14px; padding: 12px 10px; font-weight: 900; background: #fff; }
+.meeting-input-row input { text-align: center; }
+.free-input-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.meeting-send, .free-input-row button { border: none; border-radius: 14px; padding: 13px 16px; font-weight: 900; background: var(--rotary-gold); color: #111; }
+.button-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.cue-button { min-height: 70px; border: 2px solid rgba(0,0,0,.08); border-radius: 18px; padding: 10px 8px; font-weight: 1000; font-size: clamp(1rem, 4vw, 1.25rem); box-shadow: 0 8px 22px rgba(0,0,0,.10); touch-action: manipulation; }
+.cue-button.wide { font-size: clamp(.9rem, 3.45vw, 1.1rem); }
+.cue-button:active, .meeting-send:active, .free-input-row button:active { transform: translateY(1px); filter: brightness(.94); }
+.cue-button.navy { background: var(--navy); color: var(--rotary-gold); }
+.cue-button.red { background: var(--red); color: #fff; }
+.cue-button.white { background: #fff; color: #000; }
+.cue-button.ok { background: var(--success); color: #fff; }
+.cue-button.clear { background: #111; color: #fff; }
+.status-panel { min-height: 56px; font-size: .95rem; }
+.last-sent { margin-top: 6px; font-weight: 900; color: var(--rotary-blue); }
+@media (min-width: 780px) {
+  .button-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cue-button { min-height: 78px; }
+}
+@media (orientation: landscape) and (max-height: 520px) {
+  .controller-header { padding-top: 8px; padding-bottom: 8px; }
+  .controller-main { padding-top: 10px; }
+  .cue-button { min-height: 56px; }
+}
+@media (max-width: 520px) { .home-actions { grid-template-columns: 1fr; } }
